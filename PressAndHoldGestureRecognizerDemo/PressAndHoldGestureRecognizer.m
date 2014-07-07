@@ -96,11 +96,13 @@
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
 {
-    CGPoint newLocation = [[touches anyObject] locationInView:self.view];
-    CGFloat dx = newLocation.x - _beginLocation.x;
-    CGFloat dy = newLocation.y - _beginLocation.y;
-    if (sqrt(dx * dx + dy * dy) > self.allowableMovementWhenRecognized ) {
-        self.state = UIGestureRecognizerStateEnded;
+    if (self.state == UIGestureRecognizerStateBegan || self.state == UIGestureRecognizerStateChanged) {
+        CGPoint newLocation = [[touches anyObject] locationInView:self.view];
+        CGFloat dx = newLocation.x - _beginLocation.x;
+        CGFloat dy = newLocation.y - _beginLocation.y;
+        if (sqrt(dx * dx + dy * dy) > self.allowableMovementWhenRecognized ) {
+            self.state = UIGestureRecognizerStateEnded;
+        }
     }
     [super touchesMoved:touches withEvent:event];
 }
