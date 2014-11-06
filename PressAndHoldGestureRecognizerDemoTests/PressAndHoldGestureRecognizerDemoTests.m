@@ -35,6 +35,21 @@
 - (void)invokeMethods;
 @end
 
+@implementation PressAndHoldGestureRecognizer (tests)
+
+- (NSSet *)targetsAndActions
+{
+    return [self valueForKey:@"_targetsAndActions"];
+}
+
+@end
+
+@interface TargetAndActionPair : NSObject
+@property (nonatomic, readonly) id target;
+@property (nonatomic, readonly) SEL action;
++ (TargetAndActionPair *)pairWithTargte:(id)target action:(SEL)action;
+@end
+
 @interface PressAndHoldGestureRecognizerDemoTests : XCTestCase
 @end
 
@@ -171,6 +186,33 @@
     XCTAssertTrue(_action1Invoked, @"");
     XCTAssertTrue(_action2Invoked, @"");
     XCTAssertEqualObjects(_sender, _gesture, @"");
+}
+
+- (void)testGestureWillNotRetainTargets
+{
+    @autoreleasepool {
+        StubObject *stub = [[StubObject alloc] init];
+        [_gesture addTarget:stub action:@selector(someAction1)];
+    }
+    XCTestExpectation *expectation = [self expectationWithDescription:@"wait stub object to be released"];
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        
+        NSSet *targetsAndActions = [_gesture targetsAndActions];
+        XCTAssertNotNil(targetsAndActions);
+        XCTAssertTrue(targetsAndActions.count == (NSUInteger)1);
+        for (TargetAndActionPair *pair in targetsAndActions) {
+            XCTAssertNil(pair.target);
+        }
+        
+        XCTAssertNoThrow([_gesture invokeMethods]);
+        XCTAssertTrue(targetsAndActions.count == (NSUInteger)0);
+        
+        [expectation fulfill];
+    });
+    
+    [self waitForExpectationsWithTimeout:2.0 handler:^(NSError *error){
+    }];
 }
 
 @end

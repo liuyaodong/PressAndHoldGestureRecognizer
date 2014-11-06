@@ -16,7 +16,7 @@
 
 @implementation TargetAndActionPair
 {
-    id  _target;
+    __weak id  _target;
     SEL _action;
 }
 
@@ -26,6 +26,16 @@
         return YES;
     }
     return [super isEqual:object];
+}
+
+- (id)target
+{
+    return _target;
+}
+
+- (SEL)action
+{
+    return _action;
 }
 
 - (NSUInteger)hash
@@ -41,6 +51,9 @@
     return pair;
 }
 
+@end
+
+@interface PressAndHoldGestureRecognizer ()
 @end
 
 @implementation PressAndHoldGestureRecognizer
@@ -129,7 +142,14 @@
 
 - (void)invokeMethods
 {
-    for (TargetAndActionPair *pair in _targetsAndActions) {
+    NSSet *targetsAndActions = [_targetsAndActions copy];
+    for (TargetAndActionPair *pair in targetsAndActions) {
+        
+        if (!pair.target) {
+            [_targetsAndActions removeObject:pair];
+            return;
+        }
+        
         NSMethodSignature *methodSignature = [pair.target methodSignatureForSelector:pair.action];
         IMP imp = [pair.target methodForSelector:pair.action];
         if (methodSignature.numberOfArguments == 0) {
